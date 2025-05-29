@@ -25,20 +25,43 @@ RUN mkdir -p ${ORACLE_HOME} && \
 
 ENV ORACLE_HOME=${ORACLE_HOME}
 
-#Build and install all necessary additional PHP extensions and binaries including oci8, swoole, supervisor
-RUN DEBIAN_FRONTEND=noninteractive && \
-    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add - && \
-    apt-get update && \
-    apt-get install -y php${PHP_BASE_VERSION}-dev php${PHP_BASE_VERSION}-mysqlnd libaio1 && \
-    ldconfig && \
-    echo "instantclient,${ORACLE_HOME}" | pecl install oci8-${OCI8_PECL_VERSION} && \
-    echo "extension=oci8.so" > /etc/php/${PHP_BASE_VERSION}/cli/conf.d/30-oci8.ini && \
-    pecl install openswoole && \
-    echo "extension=openswoole.so" > /etc/php/${PHP_BASE_VERSION}/cli/conf.d/30-swoole.ini && \
-    apt-get install --no-install-recommends -y openssh-server && \
-    apt-get purge -y php-pear build-essential php${PHP_BASE_VERSION}-dev pkg-config && \
-    apt-get autoremove -y && \
-    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# 1. Додаємо ключ для yarn
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+# 2. Оновлюємо списки пакетів
+RUN apt-get update
+# 3. Встановлюємо потрібні пакети
+RUN apt-get update && apt-get install -y --fix-missing php${PHP_BASE_VERSION}-dev php${PHP_BASE_VERSION}-mysqlnd libaio1
+## 4. Оновлюємо кеш динамічних бібліотек
+#RUN ldconfig
+## 5. Встановлюємо oci8 через PECL, передаючи параметри в echo
+#RUN echo "instantclient,${ORACLE_HOME}" | pecl install oci8-${OCI8_PECL_VERSION}
+## 6. Вмикаємо розширення oci8
+#RUN echo "extension=oci8.so" > /etc/php/${PHP_BASE_VERSION}/cli/conf.d/30-oci8.ini
+## 7. Встановлюємо openswoole через PECL
+#RUN pecl install openswoole
+## 8. Вмикаємо розширення openswoole
+#RUN echo "extension=openswoole.so" > /etc/php/${PHP_BASE_VERSION}/cli/conf.d/30-swoole.ini
+## 9. Встановлюємо openssh-server (supervisor тут треба окремо, бо це окремий пакет)
+#RUN apt-get install --no-install-recommends -y openssh-server
+## 10. Очищуємо непотрібні пакети (php-pear, build-essential, php-dev і pkg-config)
+#RUN apt-get purge -y php-pear build-essential php${PHP_BASE_VERSION}-dev pkg-config
+## 11. Видаляємо зайві пакети і кеші
+#RUN apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+##Build and install all necessary additional PHP extensions and binaries including oci8, swoole, supervisor
+#RUN DEBIAN_FRONTEND=noninteractive && \
+#    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add - && \
+#    apt-get update && \
+#    apt-get install -y php${PHP_BASE_VERSION}-dev php${PHP_BASE_VERSION}-mysqlnd libaio1 && \
+#    ldconfig && \
+#    echo "instantclient,${ORACLE_HOME}" | pecl install oci8-${OCI8_PECL_VERSION} && \
+#    echo "extension=oci8.so" > /etc/php/${PHP_BASE_VERSION}/cli/conf.d/30-oci8.ini && \
+#    pecl install openswoole && \
+#    echo "extension=openswoole.so" > /etc/php/${PHP_BASE_VERSION}/cli/conf.d/30-swoole.ini && \
+#    apt-get install --no-install-recommends -y openssh-server && \
+#    apt-get purge -y php-pear build-essential php${PHP_BASE_VERSION}-dev pkg-config && \
+#    apt-get autoremove -y && \
+#    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 #Setup SSH access within App Service environment as described in official documentation.
 #For more information see link below:
@@ -70,13 +93,13 @@ ENV PHP_EXTENSION_GD=1 \
     PHP_EXTENSION_SWOOLE=1 \
     PHP_EXTENSION_OCI8=1
 
-#Get application source
-COPY --chown=docker:docker ./src .
-
-#Install application-specific dependencies
-RUN composer install --no-dev
-
-#Build frontend templates required during execution
-RUN npm ci && npm run prod
+##Get application source
+#COPY --chown=docker:docker ./src .
+#
+##Install application-specific dependencies
+#RUN composer install --no-dev
+#
+##Build frontend templates required during execution
+#RUN npm ci && npm run prod
 
 CMD ["/etc/container/entrypoint.sh"]
