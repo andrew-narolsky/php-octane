@@ -1,0 +1,15 @@
+services:
+  app:
+    build:
+      context: ./php-octane
+      dockerfile: Dockerfile
+    container_name: php_octane_app
+    ports:
+      - "8000:8000" # або інший порт, якщо Octane слухає інший
+    volumes:
+      - ./php-octane:/var/www # якщо треба мати live-reload або sync з хостом (не обов’язково)
+    working_dir: /var/www
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+    command: php artisan octane:start --server=swoole --host=0.0.0.0 --port=8000php-cli
